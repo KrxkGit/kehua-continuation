@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>时刻 - 延续可话</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.7/d3.layout.cloud.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="p-4 md:pt-10 pb-32">
+<div id="wordContextMenu">
+    <div class="menu-item" onclick="跳转当前词()">定位记忆</div>
+    <div class="menu-item text-red-400" onclick="屏蔽选中词()">屏蔽词汇</div>
+</div>
+<div id="navOverlay" class="fixed inset-0 bg-black/10 z-[90] hidden opacity-0 transition-all"
+     onclick="toggleMobileNav(false)"></div>
+<div id="backToTop" onclick="window.scrollTo({top:0, behavior:'smooth'})">↑</div>
+<button id="mobileNavBtn"
+        class="fixed right-5 bottom-8 z-[110] w-12 h-12 bg-black text-white rounded-full flex items-center justify-center shadow-lg lg:hidden"
+        onclick="toggleMobileNav()">M
+</button>
+
+<div class="max-w-xl mx-auto">
+    <header class="flex justify-between items-center mb-8 px-6">
+        <div><h1 class="text-2xl font-bold tracking-tight text-gray-900">时刻</h1>
+            <div class="h-1 w-6 mt-1 bg-accent rounded-full transition-all duration-500"></div>
+        </div>
+        <button onclick="toggleGistPanel()" class="text-gray-300 hover:text-gray-600 transition-colors">设置</button>
+    </header>
+
+    <div id="syncPanel" class="bg-white rounded-[35px] p-8 shadow-sm border border-white/50">
+        <div id="configForm">
+            <div class="mb-8 text-center flex gap-4 justify-center">
+                <div class="color-dot bg-[#F8FAFB]" onclick="setTheme('#F8FAFB', '#3182CE', this)"></div>
+                <div class="color-dot bg-[#FDF8F5]" onclick="setTheme('#FDF8F5', '#E53E3E', this)"></div>
+                <div class="color-dot bg-[#F5FDF8]" onclick="setTheme('#F5FDF8', '#38A169', this)"></div>
+                <div class="color-dot bg-[#2D3748]" onclick="setTheme('#2D3748', '#A0AEC0', this)"></div>
+            </div>
+            <div class="mb-8 p-6 bg-gray-50 rounded-[25px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest">记忆星图</h3>
+                    <div class="flex gap-3">
+                        <button onclick="generateWordCloud()" class="text-accent text-[11px] font-bold">刷新星图
+                        </button>
+                        <button onclick="generateGlobalAISummary()" id="aiSumBtn"
+                                class="text-purple-500 text-[11px] font-bold">AI 全量总结
+                        </button>
+                    </div>
+                </div>
+                <div id="wordCloudContainer"></div>
+                <div id="globalAiDisplay" class="global-ai-box"></div>
+                <div id="blackListDisplay" class="mt-4 flex flex-wrap gap-2"></div>
+            </div>
+            <h2 class="text-lg font-bold mb-4">AI 配置</h2>
+            <input type="text" id="aiEndpoint" placeholder="API Endpoint" class="gist-input"/>
+            <input type="password" id="aiKey" placeholder="API Key" class="gist-input"/>
+            <input type="text" id="aiModel" placeholder="Model Name" class="gist-input"/>
+            <div class="flex justify-between items-center mt-6 mb-4">
+                <h2 class="text-lg font-bold">Gist Sync</h2>
+                <div class="flex gap-4">
+                    <label class="text-accent text-xs font-bold cursor-pointer">导入码<input type="file"
+                                                                                             id="qrFileInput"
+                                                                                             accept="image/*"
+                                                                                             class="hidden"></label>
+                    <button onclick="showCameraScanner()" class="text-gray-400 text-xs font-bold">扫码</button>
+                </div>
+            </div>
+            <input type="password" id="ghToken" placeholder="GitHub Token" class="gist-input"/>
+            <input type="text" id="gistId" placeholder="Gist ID" class="gist-input"/>
+            <input type="password" id="syncKey" placeholder="Password (加密用)" class="gist-input"
+                   style="background:#FFF5F5"/>
+            <div class="flex gap-3 mt-4">
+                <button onclick="pullFromCloud()"
+                        class="flex-1 py-3 bg-blue-50 text-accent rounded-2xl text-xs font-bold">下载记忆
+                </button>
+                <button onclick="pushToCloud()" class="flex-1 py-3 bg-black text-white rounded-2xl text-xs font-bold">
+                    推送备份
+                </button>
+            </div>
+            <div class="flex justify-between mt-8">
+                <button onclick="generateConfigQR()" class="text-gray-300 text-[10px] font-bold">Show QR</button>
+                <button onclick="saveGistConfig(true)" class="text-gray-300 text-[10px] font-bold">Save Local</button>
+                <button onclick="exportJSON()" class="text-gray-300 text-[10px] font-bold">Export JSON</button>
+            </div>
+        </div>
+        <div id="cameraScannerSection" class="hidden">
+            <div id="reader"></div>
+            <button onclick="hideCameraScanner()"
+                    class="w-full mt-6 py-3 bg-gray-100 text-gray-400 rounded-xl text-xs font-bold">返回
+            </button>
+        </div>
+        <div id="qrDisplay" class="hidden text-center py-6">
+            <div id="qrcode" class="flex justify-center mb-6"></div>
+            <button onclick="hideQRCode()" class="text-gray-400 text-xs font-bold">关闭预览</button>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <textarea id="postInput" placeholder="写点什么..." rows="5"></textarea>
+        <div class="flex justify-end mt-6">
+            <button onclick="addPost()" class="publish-btn">发布时刻</button>
+        </div>
+    </div>
+    <div class="search-bar px-5 py-3 bg-white rounded-2xl flex items-center mb-10 border border-black/[0.02]">
+        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="搜索记忆..."
+               class="w-full outline-none text-sm text-gray-500 bg-transparent"/>
+    </div>
+    <div id="postList"></div>
+</div>
+<nav id="timelineNav" class="timeline-nav"></nav>
+
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/visual.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

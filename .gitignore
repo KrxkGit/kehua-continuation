@@ -1,0 +1,23 @@
+# --- IDE / Editor ---
+# 忽略 WebStorm 的配置文件夹
+.idea/
+# 忽略 VS Code 的配置
+.vscode/
+# 忽略系统自动生成的临时文件
+.DS_Store
+Thumbs.db
+
+# --- Dependencies ---
+# 虽然你目前使用的是 CDN，但如果以后改用 npm，需要忽略该目录
+node_modules/
+
+# --- Backup & Sensitive Data ---
+# 忽略包含 Token、ID 等敏感配置的导出文件
+archive.json
+kehua_encrypted.json
+*.log
+
+# --- Local Config ---
+# 如果你有本地的测试配置文件
+.env
+.env.local
