@@ -85,8 +85,13 @@
             <div class="flex justify-between mt-8">
                 <button onclick="generateConfigQR()" class="text-gray-300 text-[10px] font-bold">Show QR</button>
                 <button onclick="saveGistConfig(true)" class="text-gray-300 text-[10px] font-bold">Save Local</button>
+                <button onclick="triggerKehuaImport()" class="text-gray-300 text-[10px] font-bold hover:text-accent">
+                    Import Kehua
+                </button>
                 <button onclick="exportJSON()" class="text-gray-300 text-[10px] font-bold">Export JSON</button>
             </div>
+            <input type="file" id="kehuaImportInput" webkitdirectory directory multiple class="hidden"
+                   onchange="handleKehuaImport(this.files)"/>
         </div>
         <div id="cameraScannerSection" class="hidden">
             <div id="reader"></div>
